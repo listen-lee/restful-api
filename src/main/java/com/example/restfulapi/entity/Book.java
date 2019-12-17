@@ -10,6 +10,7 @@ package com.example.restfulapi.entity;/*
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -18,7 +19,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @RequiredArgsConstructor
 public class Book {
     @Id
-    private String id;
+    private ObjectId id;
     //书名
     private String name;
     private String author;
