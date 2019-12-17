@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: restful-api
+  data:
+    mongodb:
+      host: 172.16.0.241
+      database: spring
+      username: spring
+      password: spring
+server:
+  servlet:
+    context-path: /api
