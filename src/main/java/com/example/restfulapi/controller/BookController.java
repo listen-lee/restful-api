@@ -12,6 +12,9 @@ package com.example.restfulapi.controller;
 import com.example.restfulapi.entity.Book;
 import com.example.restfulapi.repo.BookRepository;
 import org.bson.types.ObjectId;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.beans.PropertyDescriptor;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -60,7 +66,11 @@ public class BookController {
      */
     @GetMapping("/books/{id}")
     public HttpEntity<?> booksOne(@PathVariable String id) {
-        return new ResponseEntity<>(bookRepository.findById(new ObjectId(id)), HttpStatus.OK);
+        Optional<Book> book = bookRepository.findById(new ObjectId(id));
+        if (book.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(book.get(), HttpStatus.OK);
     }
 
     /**
@@ -73,8 +83,6 @@ public class BookController {
      */
     @PostMapping("/books")
     public HttpEntity<?> booksAdd(@Valid @RequestBody Book book, BindingResult bindResult) {
-
-        book.setId(null);
         return new ResponseEntity<>(bookRepository.save(book), HttpStatus.CREATED);
     }
 
@@ -88,7 +96,7 @@ public class BookController {
      * @return http 响应
      */
     @PutMapping("/books/{id}")
-    public HttpEntity<?> booksPut(@Valid @PathVariable String id, @RequestBody Book book, BindingResult bindingResult) {
+    public HttpEntity<?> booksPut(@PathVariable String id, @RequestBody @Valid Book book, BindingResult bindingResult) {
         Book save;
         Optional<Book> existBook = bookRepository.findById(new ObjectId(id));
         if (existBook.isPresent()) {
@@ -98,6 +106,31 @@ public class BookController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
 
+    /**
+     * 更新一个书单,提供一个书单的部分信息
+     * PATCH   /api/v1/books/{id}   更新一条书单，提供部分信息
+     *
+     * @param id   更新的id
+     * @param book 更新后的书单
+     * @return http 响应
+     */
+    @PatchMapping("/books/{id}")
+    public HttpEntity<?> booksPatch(@PathVariable String id, @RequestBody Book book) {
+        Optional<Book> existBook = bookRepository.findById(new ObjectId(id));
+        if (existBook.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        BeanWrapper beanWrapper = new BeanWrapperImpl(book);
+        PropertyDescriptor[] propertyDescriptors = beanWrapper.getPropertyDescriptors();
+        List<String> nullPropertyNames = new ArrayList<>();
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            if (beanWrapper.getPropertyValue(propertyDescriptor.getName()) == null) {
+                nullPropertyNames.add(propertyDescriptor.getName());
+            }
+        }
+        BeanUtils.copyProperties(book, existBook, nullPropertyNames.toArray(new String[0]));
+        return new ResponseEntity<>(bookRepository.save(existBook.get()), HttpStatus.OK);
     }
 }

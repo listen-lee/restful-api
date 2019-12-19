@@ -10,19 +10,24 @@ package com.example.restfulapi.entity;/*
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import javax.validation.constraints.NotNull;
+
 
 @Data
 @Document
 @RequiredArgsConstructor
 public class Book {
     @Id
-    private ObjectId id;
+    private String id;
     //书名
+    @NotNull(message = "书名不能为空")
     private String name;
+    @NotNull(message = "作者名称不能为空")
     private String author;
     private String description;
+    @NotNull(message = "状态不能为空")
     private boolean status;
 }
