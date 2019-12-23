@@ -10,6 +10,8 @@ package com.example.restfulapi.controller;
  */
 
 import com.example.restfulapi.entity.Book;
+import com.example.restfulapi.exception.InvalidRequestException;
+import com.example.restfulapi.exception.ResourceNotFoundException;
 import com.example.restfulapi.repo.BookRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.BeanUtils;
@@ -18,14 +20,13 @@ import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.beans.PropertyDescriptor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * rest 风格 api
@@ -55,7 +56,11 @@ public class BookController {
      */
     @GetMapping("/books")
     public HttpEntity<?> books() {
-        return new ResponseEntity<>(bookRepository.findAll(), HttpStatus.OK);
+        List<Book> allBooks = bookRepository.findAll();
+        if (CollectionUtils.isEmpty(allBooks)) {
+            throw new ResourceNotFoundException("Not Found books");
+        }
+        return new ResponseEntity<>(allBooks, HttpStatus.OK);
     }
 
     /**
@@ -67,10 +72,7 @@ public class BookController {
     @GetMapping("/books/{id}")
     public HttpEntity<?> booksOne(@PathVariable String id) {
         Optional<Book> book = bookRepository.findById(new ObjectId(id));
-        if (book.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(book.get(), HttpStatus.OK);
+        return new ResponseEntity<>(book.orElseThrow(() -> new ResourceNotFoundException(String.format("Book by id %s is not found!", id))), HttpStatus.OK);
     }
 
     /**
@@ -83,6 +85,9 @@ public class BookController {
      */
     @PostMapping("/books")
     public HttpEntity<?> booksAdd(@Valid @RequestBody Book book, BindingResult bindResult) {
+        if (bindResult.hasErrors()) {
+            throw new InvalidRequestException("Invalid parameter", bindResult);
+        }
         return new ResponseEntity<>(bookRepository.save(book), HttpStatus.CREATED);
     }
 
@@ -97,6 +102,9 @@ public class BookController {
      */
     @PutMapping("/books/{id}")
     public HttpEntity<?> booksPut(@PathVariable String id, @RequestBody @Valid Book book, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            throw new InvalidRequestException("Invalid parameter", bindingResult);
+        }
         Book save;
         Optional<Book> existBook = bookRepository.findById(new ObjectId(id));
         if (existBook.isPresent()) {
@@ -104,7 +112,7 @@ public class BookController {
             save = bookRepository.save(book);
             return new ResponseEntity<>(save, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException(String.format("Book by id %s is not found!", id));
         }
     }
 
@@ -120,7 +128,7 @@ public class BookController {
     public HttpEntity<?> booksPatch(@PathVariable String id, @RequestBody Book book) {
         Optional<Book> existBook = bookRepository.findById(new ObjectId(id));
         if (existBook.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException(String.format("Book by id %s is not found!", id));
         }
         BeanWrapper beanWrapper = new BeanWrapperImpl(book);
         PropertyDescriptor[] propertyDescriptors = beanWrapper.getPropertyDescriptors();
