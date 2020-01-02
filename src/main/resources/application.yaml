@@ -7,6 +7,10 @@ spring:
       database: spring
       username: spring
       password: spring
+  task:
+    scheduling:
+      pool:
+        size: 10
 server:
   servlet:
     context-path: /api
