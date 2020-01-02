@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 @Component
 public class TaskTest {
-    @Scheduled(cron = "*/5 * * * * ?")
+    @Scheduled(cron = "0 39 14 * * ?")
     public void test1() {
         log.error("test1-date-time-start: {}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         try {
@@ -29,7 +29,7 @@ public class TaskTest {
         log.error("test1-date-time-end: {}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
     }
 
-    @Scheduled(cron = "*/6 * * * * ?")
+    @Scheduled(cron = "5 39 14 * * ?")
     public void test2() {
         log.error("test2-date-time-start: {}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         try {
@@ -38,6 +38,17 @@ public class TaskTest {
             log.error("sleep-error", e);
         }
         log.error("test2-date-time-end: {}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+    }
+
+    @Scheduled(cron = "10 39 14 * * ?")
+    public void test3() {
+        log.error("test3-date-time-start: {}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            log.error("sleep-error", e);
+        }
+        log.error("test3-date-time-end: {}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
     }
 }
 
